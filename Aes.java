@@ -45,15 +45,13 @@ public class Aes {
 	private static byte[] aadData;
 	private static GCMParameterSpec gcmParamSpec;
 
-	public static void init(String userPass){
+	public static void init(char[] userPass){
 		
 		aadData = "random".getBytes() ; // Any random data can be used as tag. Some common examples could be domain name...
 
 		// Use different key+IV pair for encrypting/decrypting different parameters
 
 		// Generating Key
-		//TODO get password from User
-		char[] password = userPass.toCharArray();
 		salt = new byte[SALT_SIZE];
 		SecureRandom srand = new SecureRandom();
 		srand.nextBytes(salt);
@@ -61,7 +59,7 @@ public class Aes {
 			
 			/* Derive the key, given password and salt. */
 			SecretKeyFactory factory = SecretKeyFactory.getInstance(ALGO_PASSWORD_STRING);
-			KeySpec spec = new PBEKeySpec(password, salt, ITERATION_COUNT, AES_KEY_SIZE);
+			KeySpec spec = new PBEKeySpec(userPass, salt, ITERATION_COUNT, AES_KEY_SIZE);
 			SecretKey tmp = factory.generateSecret(spec);
 			aesKey = new SecretKeySpec(tmp.getEncoded(), "AES");
 			
@@ -130,14 +128,14 @@ public class Aes {
 	}
 
 
-	public static byte[] aesDecrypt(byte[] encryptedMessage, String userPass) {
+	public static byte[] aesDecrypt(byte[] encryptedMessage, char[] userPass) {
 	   Cipher c = null ;
 		//encryptedMessage looks like (Salt)(IV)(cipherText) (8Bytes)(128Bytes)(?Bytes)
 		byte[] splicedEncryptedMessage = new byte[encryptedMessage.length - IV_SIZE - SALT_SIZE];
 		byte[] iv = new byte[IV_SIZE];
 		byte[] salt = new byte[SALT_SIZE];
 		//TODO get password from User
-		char[] password = userPass.toCharArray();
+		char[] password = userPass;
 		SecretKey aesKey = null;
 		
 		System.arraycopy(encryptedMessage, SALT_SIZE + IV_SIZE, splicedEncryptedMessage, 0, encryptedMessage.length - SALT_SIZE - IV_SIZE  );
@@ -178,8 +176,9 @@ public class Aes {
 		try {
 			plainTextInByteArr = c.doFinal(splicedEncryptedMessage) ;
 		} catch(IllegalBlockSizeException illegalBlockSizeExc) {System.out.println("Exception while decryption, due to block size " + illegalBlockSizeExc) ; System.exit(1); }
+		 catch(AEADBadTagException aeadBadTagExc) {System.out.println("You entered the wrong password. Please try again.") ; System.exit(1); }
 		 catch(BadPaddingException badPaddingExc) {System.out.println("Exception while decryption, due to padding scheme " + badPaddingExc) ; System.exit(1); }
-		  catch(AEADBadTagException aeadBadTagExc) {System.out.println("You entered the wrong password. Please try again." + badPaddingExc) ; System.exit(1); }
+		  
 		 
 		return plainTextInByteArr ;
 	}

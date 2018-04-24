@@ -1,6 +1,5 @@
 import java.util.Map;
 import java.util.HashMap;
-import java.util.Scanner;
 import java.lang.Math; 
 import java.io.*;
 
@@ -15,12 +14,11 @@ public class GABSW_passwordManager
 	  File file;
 	  String filePath;
 	  //get userPass
-	  Scanner sc = new Scanner(System.in);
 	  System.out.println("Please enter your secret code");
-	  String userPass = new String(sc.next());
+	  Console console = System.console();
+	  char[] userPass = console.readPassword();
 	  //initilizing Encryption class 
 	  Aes.init(userPass);
-	  sc.close();
 	  
 	  DatabasePW db = new DatabasePW();
 	  filePath = new File("data.ser").getAbsolutePath();
@@ -30,7 +28,10 @@ public class GABSW_passwordManager
 	  }
 	  //add method
 	  if(args[0].equals("add")){
-		  db.addEntry(args[1],args[2],args[3]);
+		  if(args.length == 4){
+			db.addEntry(args[1],args[2],args[3]);
+		  }
+		  else{System.out.println("add usage: add arg1 arg2 arg3");}
 	  }
 	  //TODO delete method
 	  if(args[0].equals("delete")){
@@ -87,7 +88,7 @@ public class GABSW_passwordManager
       }
   }
   
-  public static DatabasePW decryptNDeserialize(String userPass){
+  public static DatabasePW decryptNDeserialize(char[] userPass){
 	  File file;
 	  String filePath;
 	  DatabasePW database = null;
