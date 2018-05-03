@@ -46,7 +46,6 @@ public class Aes {
 	private static GCMParameterSpec gcmParamSpec;
 
 	public static void init(char[] userPass){
-		
 		aadData = "random".getBytes() ; // Any random data can be used as tag. Some common examples could be domain name...
 
 		// Use different key+IV pair for encrypting/decrypting different parameters
@@ -84,7 +83,12 @@ public class Aes {
 		//System.out.println("Decrypted text " + new String(decryptedText)) ;
 	}
 	
-
+	public static char[] erasePass(char[] pass){
+		for (int i = 0; i < pass.length; i++){
+			pass[i] = 0;
+		}
+		return pass;
+	}
 
 	public static byte[] aesEncrypt(byte[] message) {
 		Cipher c = null ;
@@ -134,10 +138,10 @@ public class Aes {
 		byte[] splicedEncryptedMessage = new byte[encryptedMessage.length - IV_SIZE - SALT_SIZE];
 		byte[] iv = new byte[IV_SIZE];
 		byte[] salt = new byte[SALT_SIZE];
-		//TODO get password from User
 		char[] password = userPass;
 		SecretKey aesKey = null;
 		
+		//System.arraycopy(src, srcPos, des, desPos, copyLength);
 		System.arraycopy(encryptedMessage, SALT_SIZE + IV_SIZE, splicedEncryptedMessage, 0, encryptedMessage.length - SALT_SIZE - IV_SIZE  );
 		System.arraycopy(encryptedMessage, 0                  , salt                   , 0, SALT_SIZE);
 		System.arraycopy(encryptedMessage, SALT_SIZE          , iv                     , 0, IV_SIZE);

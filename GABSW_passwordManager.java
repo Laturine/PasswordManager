@@ -13,49 +13,105 @@ public class GABSW_passwordManager
 	  }
 	  File file;
 	  String filePath;
-	  //get userPass
-	  System.out.println("Please enter your secret code");
-	  Console console = System.console();
-	  char[] userPass = console.readPassword();
-	  //initilizing Encryption class 
-	  Aes.init(userPass);
-	  
+	  char[] pass = null; 
+	  boolean fileExists = false;
 	  DatabasePW db = new DatabasePW();
 	  filePath = new File("data.ser").getAbsolutePath();
 	  file = new File(filePath);
+	  
 	  if(file.isFile()){
-		db = decryptNDeserialize(userPass);
+		fileExists = true;
 	  }
 	  //add method
 	  if(args[0].equals("add")){
 		  if(args.length == 4){
-			db.addEntry(args[1],args[2],args[3]);
+			  if(fileExists){
+				  pass = getPassNInit();
+				  db = decryptNDeserialize(pass);
+				  db.addEntry(args[1],args[2],args[3]);
+				  SerializeNEncrypt(db);
+			  }
+			  else{
+				  System.out.println("You're creating a fresh database! \nPlease create a master password to protect your passwords");
+				  pass = getPassNInit();
+				  db.addEntry(args[1],args[2],args[3]);
+				  SerializeNEncrypt(db);
+			  }
 		  }
-		  else{System.out.println("add usage: add arg1 arg2 arg3");}
+		  else{System.out.println("add usage: add [website] [username] [password]");}
 	  }
-	  //TODO delete method
+	  //delete method
 	  if(args[0].equals("delete")){
-		  db.deleteEntry(args[1]);
+		  if(args.length == 2){
+			  if(fileExists){
+				  pass = getPassNInit();
+				  db = decryptNDeserialize(pass);
+				  db.deleteEntry(args[1]);
+				  SerializeNEncrypt(db);
+			  }
+			  else{
+				  System.out.println("You're creating a fresh database! \nPlease create a master password to protect your passwords");
+				  pass = getPassNInit();
+				  db.deleteEntry(args[1]);
+				  SerializeNEncrypt(db);
+			  }
+			
+		  }
+		  else{System.out.println("delete usage: delete [website]");}
 	  }
-	  //TODO update method
+	  //update method
 	  if(args[0].equals("update")){
-		  db.updateEntry(args[1],args[2],args[3]);
+		  if(args.length == 4){
+			  if(fileExists){
+				  pass = getPassNInit();
+				  db = decryptNDeserialize(pass);
+				  db.updateEntry(args[1],args[2],args[3]);
+				  SerializeNEncrypt(db); 
+			  }
+			  else{System.out.println("A database does not exist yet! \nPlease use command add to start a fresh database");}
+		  }
+		  else{System.out.println("update usage: update [website] [NewUsername] [NewPassword]");}
 	  }
-	  //TODO show method 
+	  //show method 
 	  if(args[0].equals("show")){
-		  db.show(args[1]);
+		  
+		  if(args.length == 2){
+			  if(fileExists){
+				  pass = getPassNInit();
+				  db = decryptNDeserialize(pass);
+				  db.show(args[1]);
+				  SerializeNEncrypt(db);
+			  }
+			  else{System.out.println("A database does not exist yet! \nPlease use command add to start a fresh database");}
+		}
+		else{System.out.println("show usage: show [website]");}
 	  }
-	  //TODO showAll method
+	  //showAll method
 	  if(args[0].equals("showAll")){
-		  db.print();
+		  if(args.length == 1){
+			  if(fileExists){
+				  pass = getPassNInit();
+				  db = decryptNDeserialize(pass);
+				  db.print();
+				  SerializeNEncrypt(db);
+			  }
+			  else{System.out.println("A database does not exist yet! \nPlease use command add to start a fresh database");}
+			  
+		  }
+		  else{System.out.println("showAll usage: showAll");}
 	  }
-	  
-	  SerializeNEncrypt(db);
 	 
   }
-  public static void SerializeNEncrypt(DatabasePW myObject){
+  private static char[] getPassNInit(){
+	  //get userPass
+	  System.out.println("Please enter your secret code");
+	  Console console = System.console();
+	  char[] userPass = console.readPassword();
+	  Aes.init(userPass);
+	  return userPass;
+  }
+  private static void SerializeNEncrypt(DatabasePW myObject){
 	  
-	//DatabasePW myObject = new DatabasePW();
 	File file;
 	String filePath;
 	try {
@@ -68,7 +124,7 @@ public class GABSW_passwordManager
          out.close();
          fileOut.close();
 		 
-         System.out.printf("Serialized data is saved in \n" + filePath);
+         System.out.printf("\nSerialized data is saved in \n" + filePath);
 		 System.out.println("\nnow encrypting...");
 		 
 		 //encrypting database
@@ -76,9 +132,10 @@ public class GABSW_passwordManager
 		 FileInputStream fis = new FileInputStream(file);
 		 fis.read(serializedText);
 		 fis.close();
-		 
+		 //exactly where encryption occurs
 		 byte[] encryptedText = Aes.aesEncrypt(serializedText);
 		 System.out.println("... all done.");
+		 
 		 //writing to data.ser
 		 fileOut = new FileOutputStream(file);
 		 fileOut.write(encryptedText);
@@ -88,7 +145,7 @@ public class GABSW_passwordManager
       }
   }
   
-  public static DatabasePW decryptNDeserialize(char[] userPass){
+  private static DatabasePW decryptNDeserialize(char[] userPass){
 	  File file;
 	  String filePath;
 	  DatabasePW database = null;
@@ -103,6 +160,7 @@ public class GABSW_passwordManager
 		  fis.close();
 		  
 		  byte[] plainText = Aes.aesDecrypt(deserializedText, userPass);
+		  //TODO userPass = Aes.erasePass(userPass);
 		  
 		  //writing to data.ser
 		  FileOutputStream fileOut = new FileOutputStream(file);
